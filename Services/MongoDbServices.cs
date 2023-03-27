@@ -24,14 +24,14 @@ namespace Server.Services
             this.userManager = userManager;
         }
 
-        public async Task<IEnumerable<Guid>> GetAllFormsAsync(string email)
+        public async Task<IEnumerable<dynamic>> GetAllFormsAsync(string email)
         {
             var user = await userManager.FindByEmailAsync(email);
             if (user is null)
                 throw new Exception("User Not Found");
 
 
-            var result =  _collection.Find(a => a.Form.CreatorId == user.Id).ToList().Select(a=>a.Form.Id);
+            var result =  _collection.Find(a => a.Form.CreatorId == user.Id).ToList().Select(a=>new { a.Form.Id,a.Form.FormName });
             return result;
 
         }
