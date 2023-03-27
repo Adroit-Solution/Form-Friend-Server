@@ -6,7 +6,7 @@ namespace Server.Services
 {
     public interface IMongoDbServices
     {
-        Task<IEnumerable<Guid>> GetAllFormsAsync(string email);
+        Task<IEnumerable<dynamic>> GetAllFormsAsync(string email);
         Task<Forms> AddForm(string email);
         Task<Forms> EditFrom(Guid id, string email);
         Task<MetaDataModel> ViewForm(Guid id, string email);
