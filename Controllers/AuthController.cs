@@ -7,10 +7,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json.Nodes;
 using System.Text;
+using Microsoft.AspNetCore.Cors;
 
 namespace Server.Controllers
 {
     [Route("api/[controller]/[action]")]
+    [EnableCors("AllowAll")]
     [ApiController]
     public class AuthController : ControllerBase
     {

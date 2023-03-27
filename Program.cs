@@ -20,6 +20,15 @@ builder.Services.AddIdentity<User, Role>()
     (
         mongoDbSettings.ConnectionURI, mongoDbSettings.DatabaseName
     );
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.SetIsOriginAllowed(_ => true).AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();
+    });
+});
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication()
     .AddJwtBearer(options =>
@@ -51,7 +60,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseCors("AllowAll");
 app.UseAuthorization();
 
 
