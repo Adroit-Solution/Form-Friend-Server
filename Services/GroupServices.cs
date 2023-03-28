@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -91,11 +92,18 @@ namespace Server.Services
 
                     var update = Builders<Forms>.Update.PullFilter(a => a.Group, a => a.GroupId == group.GroupId);
 
-                    //var result = _form.UpdateOne(a => a.Form[index]., update);
-                
+                    var result = _form.UpdateOne(a => a.Group[groupIndex].GroupId==group.GroupId, update);
+
+                    if (result.ModifiedCount == 0)
+                        throw new Exception("Group Not Deleted From Form");
                 }
             }
-            return IdentityResult.Success;
+
+            var deletedGroup = await _group.FindOneAndDeleteAsync(a => a.GroupId == group.GroupId);
+            if(deletedGroup is not null)
+                return IdentityResult.Success;
+
+            return IdentityResult.Failed();
 
         }
     }

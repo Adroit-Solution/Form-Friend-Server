@@ -74,7 +74,10 @@ namespace Server.Controllers
             try
             {
                 var result = await services.DeleteGroup(id,user);
-                return Ok(result);
+                if (result.Succeeded)
+                    return Ok(result);
+                else
+                    return BadRequest("Group not Deleted");
             }
             catch (Exception e)
             {
