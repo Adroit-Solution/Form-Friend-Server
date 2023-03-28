@@ -6,6 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using Server.Models;
+using ZstdSharp.Unsafe;
 
 namespace Server.Services
 {
@@ -292,6 +293,40 @@ namespace Server.Services
 
             var result = await _collection.UpdateOneAsync(filter: filter, update: update);
             return result.IsAcknowledged ? IdentityResult.Success : IdentityResult.Failed();
+        }
+
+        public async Task<IdentityResult> DeleteGroupFromForm(Guid groupId,Guid formId, string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                throw new Exception("User Not Found");
+
+            var group = await _group.Find(a => a.GroupId == groupId).FirstOrDefaultAsync();
+            if (group is null)
+                throw new Exception("Group not Found");
+
+            var form = await _collection.Find(a => a.Form.Id == formId).FirstOrDefaultAsync();
+            if (form is null)
+                throw new Exception("Form not Found");
+
+            if (group.Creator != user.Id && group.Creator != form.Form.CreatorId && form.Form.CreatorId != user.Id)
+                throw new Exception("Not authorised to delete the Group from Form");
+
+            TrackingModel trackingModel = new()
+            {
+                GroupId = group.GroupId,
+                GroupName = group.GroupName
+            };
+            
+            var groupIndex = form.Group.IndexOf(trackingModel);
+
+            var update = Builders<Forms>.Update.PullFilter(a => a.Group, a => a.GroupId == group.GroupId);
+
+            var result = _collection.UpdateOne(a => a.Group[groupIndex].GroupId == group.GroupId, update);
+
+            if (result.ModifiedCount == 0)
+                throw new Exception("Group Not Deleted From Form");
+            return IdentityResult.Success;
         }
     }
 }

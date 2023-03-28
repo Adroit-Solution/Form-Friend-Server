@@ -224,5 +224,23 @@ namespace Server.Controllers
                 return Ok();
             }
         }
+
+        [HttpDelete("{groupId}/{formId}")]
+        public async Task<IActionResult> DeleteGroupFromForm(Guid groupId,Guid formId)
+        {
+            var user = UserIdFromToken();
+            try
+            {
+                var result = await mongoDbServices.DeleteGroupFromForm(groupId, formId, user);
+                if (result.Succeeded)
+                    return Ok(result);
+                else
+                    return BadRequest("Group not Removed from Form");
+            }
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }
