@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Amazon.SecurityToken.Model.Internal.MarshallTransformations;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -40,7 +41,7 @@ namespace Server.Services
             
             if(group.GroupParticipant is not null)
             {
-                groupModel.GroupParticipant = group.GroupParticipant;
+                groupModel.GroupParticipant = group.GroupParticipant.Distinct().ToList();
             }
             else
             {
@@ -105,6 +106,149 @@ namespace Server.Services
 
             return IdentityResult.Failed();
 
+        }
+
+        public async Task<IdentityResult> AddMemberToGroup(List<string> participants,Guid groupId,string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                throw new Exception("User Not Found");
+
+            var group = await _group.Find(a => a.GroupId == groupId).FirstOrDefaultAsync();
+            if (group is null)
+                throw new Exception("Group not Found");
+
+            if (group.Creator != user.Id)
+                throw new Exception("Not authorised to Add participant to Group");
+
+            if (group.GroupParticipant is not null)
+            {
+                List<string> toRemove = new();
+                foreach (var participant in participants)
+                {
+                    if (group.GroupParticipant.Contains(participant))
+                    {
+                        toRemove.Add(participant);
+                    }
+                }
+                toRemove.ForEach(a => participants.Remove(a));
+            }
+
+            if (participants.Count == 0)
+                return IdentityResult.Success;
+            var filter = Builders<GroupModel>.Filter.Eq(x => x.GroupId, groupId);
+
+            var update = Builders<GroupModel>.Update
+             .AddToSetEach(x => x.GroupParticipant, participants);
+
+            var result = await _group.UpdateOneAsync(filter: filter, update: update);
+
+            var forms = await _form.Find(a => a.Group.Any(a => a.GroupId == group.GroupId)).ToListAsync();
+
+            List<Tracker> trackers = new List<Tracker>();
+            if (participants is not null)
+            {
+                foreach (var item in participants)
+                {
+                    Tracker participant = new Tracker()
+                    {
+                        Email = item,
+                        Filled = false,
+                        Seen = false
+                    };
+                    trackers.Add(participant);
+                }
+            }
+
+            if (forms is not null)
+            {
+                foreach (var item in forms)
+                {
+                    TrackingModel trackingModel = new()
+                    {
+                        GroupId = group.GroupId,
+                        GroupName = group.GroupName
+                    };
+                    var index = forms.IndexOf(item);
+                    var tracking = forms[index].Group.Find(a=>a.GroupId==trackingModel.GroupId);
+                    if (tracking is null)
+                        throw new Exception("Some Error Occured");
+                    var groupIndex = forms[index].Group.IndexOf(tracking);
+
+                    var formFilter = Builders<Forms>.Filter.Eq(a => a.Group[groupIndex].GroupId , group.GroupId);
+                    var formUpdate = Builders<Forms>.Update.PushEach($"Group.{groupIndex}.Participants", trackers);
+                    var formResult = await _form.UpdateOneAsync(formFilter, formUpdate);
+
+                    if (formResult.ModifiedCount == 0)
+                        throw new Exception("Members not added into the forms");
+                }
+            }
+                return IdentityResult.Success;
+        }
+
+        public async Task<IdentityResult> FetchMembers(Guid formId, string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                throw new Exception("User Not Found");
+
+            var form = await _form.Find(a => a.Form.Id == formId).FirstOrDefaultAsync();
+            if (form is null)
+                throw new Exception("Group not Found");
+
+            if (form.Form.CreatorId != user.Id)
+                throw new Exception("Not authorised to Add participant to Form");
+
+            var groups = form.Group.ToList();
+            foreach (var group in groups)
+            {
+                var isGroup = await _group.Find(a=>a.GroupId==group.GroupId).FirstOrDefaultAsync();
+                if (isGroup is null)
+                    throw new Exception("Group Not Present");
+
+                var formGroupParticipants = group.Participants.Select(a=>a.Email).ToList();
+
+                var groupParticipants = isGroup.GroupParticipant;
+                if (groupParticipants is null)
+                    continue;
+                formGroupParticipants.ForEach(a => groupParticipants.Remove(a));
+                if (groupParticipants.Count == 0)
+                    continue;
+                List<Tracker> trackers = new List<Tracker>();
+                if (groupParticipants is not null)
+                {
+                    foreach (var item in groupParticipants)
+                    {
+                        Tracker participant = new Tracker()
+                        {
+                            Email = item,
+                            Filled = false,
+                            Seen = false
+                        };
+                        trackers.Add(participant);
+                    }
+                }
+
+                TrackingModel trackingModel = new()
+                {
+                    GroupId = group.GroupId,
+                    GroupName = group.GroupName
+                };
+                
+                var tracking = form.Group.Find(a => a.GroupId == trackingModel.GroupId);
+                if (tracking is null)
+                    throw new Exception("Some Error Occured");
+                var groupIndex = form.Group.IndexOf(tracking);
+
+                var formFilter = Builders<Forms>.Filter.Eq(a => a.Group[groupIndex].GroupId, group.GroupId);
+                var formUpdate = Builders<Forms>.Update.PushEach($"Group.{groupIndex}.Participants", trackers);
+                var formResult = await _form.UpdateOneAsync(formFilter, formUpdate);
+
+                if (formResult.ModifiedCount == 0)
+                    throw new Exception("Members not added into the forms");
+            }
+
+            return IdentityResult.Success;
         }
     }
 }
