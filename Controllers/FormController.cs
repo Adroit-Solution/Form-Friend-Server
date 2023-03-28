@@ -104,12 +104,12 @@ namespace Server.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateSettings([FromBody]SettingsModel model,Guid id)
+        public async Task<IActionResult> UpdateSettings([FromBody] SettingsModel model, Guid id)
         {
             string userEmail = UserIdFromToken();
             try
             {
-                var doc = await mongoDbServices.UpdateSettings(userEmail, model,id);
+                var doc = await mongoDbServices.UpdateSettings(userEmail, model, id);
                 if (doc.Succeeded)
                 { return Ok(doc); }
 
@@ -121,7 +121,7 @@ namespace Server.Controllers
                     return NotFound("User Not Found");
                 else if (e.Message == "Form not Present")
                     return BadRequest("No form present with Such Id");
-                else if(e.Message== "User Not Authorized")
+                else if (e.Message == "User Not Authorized")
                     return Unauthorized("You are not authorised to Edit the Form");
                 else
                     return BadRequest(e.Message);
@@ -139,17 +139,17 @@ namespace Server.Controllers
                     return BadRequest("Some Error Occurred");
                 return Ok(doc);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                if(e.Message == "User Not Found")
+                if (e.Message == "User Not Found")
                 {
                     return NotFound("User not Present");
                 }
-                else if(e.Message== "Form not Present")
+                else if (e.Message == "Form not Present")
                 {
                     return NotFound("Form Not Found");
                 }
-                else if( e.Message == "Form Closed")
+                else if (e.Message == "Form Closed")
                 {
                     return StatusCode(503, "Form Closed");
                 }
@@ -183,12 +183,12 @@ namespace Server.Controllers
         }
 
         [HttpPut("{groupId}/{formId}")]
-        public async Task<IActionResult> AddGroupToForm(Guid groupId,Guid formId)
+        public async Task<IActionResult> AddGroupToForm(Guid groupId, Guid formId)
         {
             string userEmail = UserIdFromToken();
             try
             {
-                var doc = await mongoDbServices.AddGroupToForm(groupId,formId,userEmail);
+                var doc = await mongoDbServices.AddGroupToForm(groupId, formId, userEmail);
                 if (doc.Succeeded)
                 { return Ok(doc); }
 
@@ -209,6 +209,20 @@ namespace Server.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> AddResponse(UserResponse model)
+        {
+            var user = UserIdFromToken();
 
+            try
+            {
+                var result = await mongoDbServices.AddResponse(model, user);
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                return Ok();
+            }
+        }
     }
 }

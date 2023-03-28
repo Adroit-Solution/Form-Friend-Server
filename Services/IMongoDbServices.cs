@@ -13,5 +13,6 @@ namespace Server.Services
         Task<IdentityResult> UpdateMeta(string email, MetaDataModel meta);
         Task<IdentityResult> UpdateSettings(string email, SettingsModel settings, Guid id);
         Task<IdentityResult> AddGroupToForm(Guid groupId, Guid formId, string email);
+        Task<IdentityResult> AddResponse(UserResponse model, string email);
     }
 }

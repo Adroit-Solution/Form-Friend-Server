@@ -16,7 +16,12 @@ namespace Server.Models
     {
         public Guid Id { get; set; }
         public Guid? QuestionId { get; set; }
-
+        public string Answers { get; set; }
     }
 
+    public class UserResponse
+    {
+        public Guid? FormId { get; set; }
+        public List<Answer> Response { get; set; }
+    }
 }

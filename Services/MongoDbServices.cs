@@ -66,6 +66,79 @@ namespace Server.Services
             return form;
         }
 
+        public async Task<IdentityResult> AddResponse(UserResponse model,string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                throw new Exception("User not Found");
+
+            var form = await _collection.Find(a => a.Form.UrlId == model.FormId).FirstOrDefaultAsync();
+            if (form is null)
+                throw new Exception("Form not Present");
+
+            if (form.AcceptResponse)
+                throw new Exception("Form Closed");
+            bool formAded = false;
+            if (form.Settings.IsGroup)
+            {
+                var groups = form.Group;
+                foreach (var group in groups)
+                {
+                    var indexOfGroup = groups.IndexOf(group);
+                    var isPresent = group.Participants.Find(a => a.Email == user.Email);
+                    if (isPresent is not null)
+                    {
+                        var index = group.Participants.IndexOf(isPresent);
+
+                        var update = Builders<Forms>.Update.Set(a => a.Group[indexOfGroup].Participants[index].Filled, true);
+                        var result = await _collection.UpdateOneAsync(a => a.Group[indexOfGroup].Participants[index].Email == isPresent.Email, update);
+
+                        ResponseModel responseModel = new()
+                        {
+                            Id = Guid.NewGuid(),
+                            Response = model.Response,
+                            FormId = model.FormId,
+                            UserId = user.Id
+                        };
+                        var formFilter = Builders<Forms>.Filter.Eq("_id", ObjectId.Parse(form.Id));
+
+                        var push = Builders<Forms>.Update.Push("Responses", responseModel);
+
+                        var added = _collection.UpdateOne(formFilter, push);
+                        if (added.IsModifiedCountAvailable)
+                        { 
+                            formAded = true;
+                            return IdentityResult.Success;
+                        }
+                        
+                    }
+                }
+            }
+
+            if (form.Settings.IsAnonymous && !formAded)
+            {
+                ResponseModel responseModel = new()
+                {
+                    Id = Guid.NewGuid(),
+                    Response = model.Response,
+                    FormId = model.FormId,
+                    UserId = user.Id
+                };
+                var formFilter = Builders<Forms>.Filter.Eq("_id", ObjectId.Parse(form.Id));
+
+                var push = Builders<Forms>.Update.Push("Responses", responseModel);
+
+                var added = _collection.UpdateOne(formFilter, push);
+                if (added.IsModifiedCountAvailable)
+                {
+                    formAded = true;
+                    return IdentityResult.Success;
+                }
+            }
+
+            throw new Exception("Edge Case Missed");
+        }
+
         public async Task<MetaDataModel> ViewForm(Guid id, string email)
         {
             var user = await userManager.FindByEmailAsync(email);
