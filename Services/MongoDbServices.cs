@@ -83,6 +83,30 @@ namespace Server.Services
 
             if (form.AcceptResponse)
                 throw new Exception("Form Closed");
+
+            if (form.Settings.IsTimeBound)
+                if (form.Settings.EndTime < DateTime.UtcNow|| form.Settings.StartTime > DateTime.UtcNow)
+                    throw new Exception("Form is Closed");
+
+            if (form.Settings.IsResponseLimit)
+            {
+                if (form.Responses is not null)
+                {
+                    var count = form.Responses.Count();
+                    if(count>=form.Settings.ResponseLimit) { throw new Exception("Response Limit Achieved"); }
+                }
+            }
+
+            if(form.Settings.IsResponseLimitPerUser||!form.Settings.IsMultiple)
+            {
+                if (form.Responses is not null)
+                {
+                    var response = form.Responses.FindAll(a => a.UserId == user.Id);
+                    if (response.Count()>=form.Settings.ResponseLimitPerUser)
+                        throw new Exception("You have already filled the Form");
+                }
+            }
+
             bool formAded = false;
             if (form.Settings.IsGroup)
             {
@@ -158,7 +182,30 @@ namespace Server.Services
             if (form.AcceptResponse)
                 throw new Exception("Form Closed");
 
-            if(form.Settings.IsGroup)
+            if (form.Settings.IsTimeBound)
+                if (form.Settings.EndTime < DateTime.UtcNow || form.Settings.StartTime > DateTime.UtcNow)
+                    throw new Exception("Form is Closed");
+
+            if (form.Settings.IsResponseLimit)
+            {
+                if (form.Responses is not null)
+                {
+                    var count = form.Responses.Count();
+                    if (count >= form.Settings.ResponseLimit) { throw new Exception("Response Limit Achieved"); }
+                }
+            }
+
+            if (form.Settings.IsResponseLimitPerUser || !form.Settings.IsMultiple)
+            {
+                if (form.Responses is not null)
+                {
+                    var response = form.Responses.FindAll(a => a.UserId == user.Id);
+                    if (response.Count() >= form.Settings.ResponseLimitPerUser)
+                        throw new Exception("You have already filled the Form");
+                }
+            }
+
+            if (form.Settings.IsGroup)
             {
                 var groups = form.Group;
                 foreach (var group in groups)
