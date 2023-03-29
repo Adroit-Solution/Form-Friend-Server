@@ -6,6 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using Server.Models;
+using System.Reflection.Metadata.Ecma335;
 using ZstdSharp.Unsafe;
 
 namespace Server.Services
@@ -14,6 +15,7 @@ namespace Server.Services
     {
         private readonly IMongoCollection<Forms> _collection;
         private readonly IMongoCollection<GroupModel> _group;
+        private readonly IMongoCollection<ReminderModel> _reminder;
         private readonly UserManager<User> userManager;
 
         public MongoDbServices(IOptions<MongoDBSettings> settings, UserManager<User> userManager)
@@ -22,6 +24,7 @@ namespace Server.Services
             var database = client.GetDatabase(settings.Value.DatabaseName);
             _collection = database.GetCollection<Forms>("forms");
             _group = database.GetCollection<GroupModel>("group");
+            _reminder = database.GetCollection<ReminderModel>("remainder");
             this.userManager = userManager;
         }
 
@@ -327,6 +330,49 @@ namespace Server.Services
             if (result.ModifiedCount == 0)
                 throw new Exception("Group Not Deleted From Form");
             return IdentityResult.Success;
+        }
+
+        public async Task<IdentityResult> AddReminder(RequestReminder requestReminder, string email)
+        {
+            var admin = await userManager.FindByNameAsync(email);
+            if (admin is null)
+                throw new Exception("User not Found");
+
+            var group = await _group.Find(a => a.GroupId == requestReminder.GroupId).FirstOrDefaultAsync();
+            if (group is null)
+                throw new Exception("Group not Present");
+
+            if (admin.Id != group.Creator)
+                throw new Exception("Not Authorized to send Notification");
+
+            List<ReminderModel> reminders = new List<ReminderModel>();
+
+            if (group.GroupParticipant is null)
+                return IdentityResult.Success;
+
+            foreach (var participant in requestReminder.Participants)
+            {
+                var user = await userManager.FindByEmailAsync(participant);
+                if (user is null)
+                    continue;
+
+                if (!group.GroupParticipant.Contains(participant))
+                    continue;
+
+                ReminderModel reminderModel = new()
+                {
+                    AdminName = admin.FirstName,
+                    Group = group.GroupId,
+                    GroupName = group.GroupName,
+                    Message = requestReminder.Message,
+                    User = user.Id
+                };
+                reminders.Add(reminderModel);
+            }
+
+            await _reminder.InsertManyAsync(reminders);
+            return IdentityResult.Success;
+
         }
     }
 }

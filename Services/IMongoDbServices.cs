@@ -15,5 +15,6 @@ namespace Server.Services
         Task<IdentityResult> AddGroupToForm(Guid groupId, Guid formId, string email);
         Task<IdentityResult> AddResponse(UserResponse model, string email);
         Task<IdentityResult> DeleteGroupFromForm(Guid groupId, Guid formId, string email);
+        Task<IdentityResult> AddReminder(RequestReminder requestReminder, string email);
     }
 }

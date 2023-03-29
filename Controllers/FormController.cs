@@ -242,5 +242,23 @@ namespace Server.Controllers
                 return BadRequest(e.Message);
             }
         }
+
+        [HttpPost]
+        public async Task<IActionResult> AddReminder([FromBody]RequestReminder requestReminder)
+        {
+            var user = UserIdFromToken();
+            try
+            {
+                var result = await mongoDbServices.AddReminder(requestReminder, user);
+                if (result.Succeeded)
+                    return Ok(result);
+                else
+                    return BadRequest("Reminder not Sent Successfully");
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }
