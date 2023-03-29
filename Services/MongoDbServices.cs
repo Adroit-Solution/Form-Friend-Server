@@ -424,5 +424,25 @@ namespace Server.Services
 
             return result.ModifiedCount>0 ? IdentityResult.Success : IdentityResult.Failed();
         }
+
+        public async Task<IdentityResult> MarkAsUnRead(string id, string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                throw new Exception("User Not Present");
+
+            var reminder = await _reminder.Find(a => a.User == user.Id && a.Id == id).FirstOrDefaultAsync();
+
+            if (reminder is null)
+                throw new Exception("No such Notification Found");
+
+            var filter = Builders<ReminderModel>.Filter.Eq(a => a.Id, id);
+            var update = Builders<ReminderModel>.Update
+              .Set(x => x.IsSeen, false);
+
+            var result = await _reminder.UpdateOneAsync(filter: filter, update: update);
+
+            return result.ModifiedCount > 0 ? IdentityResult.Success : IdentityResult.Failed();
+        }
     }
 }

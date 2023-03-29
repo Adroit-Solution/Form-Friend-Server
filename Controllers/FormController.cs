@@ -296,5 +296,23 @@ namespace Server.Controllers
                 return BadRequest(e.Message);
             }
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> MarkAsUnRead(string id)
+        {
+            var user = UserIdFromToken();
+            try
+            {
+                var result = await mongoDbServices.MarkAsUnRead(id, user);
+                if (result.Succeeded)
+                    return Ok(result);
+                else
+                    return BadRequest("Some Error Occurred");
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }
