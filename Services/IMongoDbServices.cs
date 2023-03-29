@@ -19,5 +19,6 @@ namespace Server.Services
         Task<List<ResponseReminder>> ReminderList(string email);
         Task<IdentityResult> ViewReminder(string id, string email);
         Task<IdentityResult> MarkAsUnRead(string id, string email);
+        Task<IdentityResult> DeleteReminder(string id, string email);
     }
 }

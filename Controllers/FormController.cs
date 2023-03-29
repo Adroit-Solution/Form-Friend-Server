@@ -314,5 +314,23 @@ namespace Server.Controllers
                 return BadRequest(e.Message);
             }
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteReminder(string id)
+        {
+            var user = UserIdFromToken();
+            try
+            {
+                var result = await mongoDbServices.DeleteReminder(id, user);
+                if (result.Succeeded)
+                    return Ok(result);
+                else
+                    return BadRequest("Reminder not Deleted");
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }
