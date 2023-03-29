@@ -118,7 +118,25 @@ namespace Server.Controllers
                 else
                     return BadRequest(result);
             }
-            catch(Exception e)
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpDelete("{groupId}")]
+        public async Task<IActionResult> DeleteMemberFromGroup([FromBody]List<string> emails,Guid groupId)
+        {
+            var user = UserIdFromToken();
+            try
+            {
+                var result = await services.DeleteMemberFromGroup(emails,groupId,user);
+                if (result.Succeeded)
+                    return Ok(result);
+                else
+                    return BadRequest("Members not deleted from Group");
+            }
+            catch (Exception e)
             {
                 return BadRequest(e.Message);
             }
