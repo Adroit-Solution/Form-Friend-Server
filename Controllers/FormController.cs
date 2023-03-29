@@ -260,5 +260,41 @@ namespace Server.Controllers
                 return BadRequest(e.Message);
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ReminderList()
+        {
+            var user = UserIdFromToken();
+            try
+            {
+                var result = await mongoDbServices.ReminderList(user);
+                if (result is not null)
+                    return Ok(result);
+                else
+                    return BadRequest("Some Error Occurred");
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> ViewReminder(string id)
+        {
+            var user = UserIdFromToken();
+            try
+            {
+                var result = await mongoDbServices.ViewReminder(id,user);
+                if (result.Succeeded)
+                    return Ok(result);
+                else
+                    return BadRequest("Some Error Occurred");
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }

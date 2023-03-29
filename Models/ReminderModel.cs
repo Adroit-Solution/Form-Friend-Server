@@ -22,4 +22,14 @@ namespace Server.Models
         public string Message { get; set; }
         public List<string> Participants { get; set; }
     }
+
+    public class ResponseReminder
+    {
+        public string Id { get; set; }
+        public Guid GroupId { get; set; }
+        public string Message { get; set; }
+        public string GroupName { get; set; }
+        public string AdminName { get; set; }
+        public bool IsSeen { get; set; }
+    }
 }

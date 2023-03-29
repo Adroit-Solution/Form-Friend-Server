@@ -6,6 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using Server.Models;
+using System;
 using System.Reflection.Metadata.Ecma335;
 using ZstdSharp.Unsafe;
 
@@ -373,6 +374,55 @@ namespace Server.Services
             await _reminder.InsertManyAsync(reminders);
             return IdentityResult.Success;
 
+        }
+
+        public async Task<List<ResponseReminder>> ReminderList(string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                throw new Exception("User Not Present");
+
+            var reminders = _reminder.Find(a => a.User == user.Id).ToList();
+
+            List<ResponseReminder> response = new();
+
+            foreach (var reminder in reminders)
+            {
+                ResponseReminder responseModel = new()
+                {
+                    Id = reminder.Id,
+                    AdminName = reminder.AdminName,
+                    GroupName = reminder.GroupName,
+                    GroupId = reminder.Group,
+                    IsSeen = reminder.IsSeen,
+                    Message = reminder.Message,
+                };
+                response.Add(responseModel);
+            }
+
+
+            return response;
+
+        }
+
+        public async Task<IdentityResult> ViewReminder(string id,string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                throw new Exception("User Not Present");
+
+            var reminder = await _reminder.Find(a => a.User == user.Id&&a.Id==id).FirstOrDefaultAsync();
+
+            if (reminder is null)
+                throw new Exception("No such Notification Found");
+
+            var filter = Builders<ReminderModel>.Filter.Eq(a=>a.Id, id);
+            var update = Builders<ReminderModel>.Update
+              .Set(x => x.IsSeen, true);
+
+            var result = await _reminder.UpdateOneAsync(filter: filter, update: update);
+
+            return result.ModifiedCount>0 ? IdentityResult.Success : IdentityResult.Failed();
         }
     }
 }
