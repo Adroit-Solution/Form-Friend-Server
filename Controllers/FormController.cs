@@ -332,5 +332,23 @@ namespace Server.Controllers
                 return BadRequest(e.Message);
             }
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> ChangeStatus(Guid id)
+        {
+            var user = UserIdFromToken();
+            try
+            {
+                var result = await mongoDbServices.ChangeStatus(id, user);
+                if (result.Succeeded)
+                    return Ok(result);
+                else
+                    return BadRequest("Reminder not Deleted");
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }

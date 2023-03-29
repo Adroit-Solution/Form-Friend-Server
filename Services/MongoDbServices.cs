@@ -8,6 +8,7 @@ using MongoDB.Driver.Linq;
 using Server.Models;
 using System;
 using System.Reflection.Metadata.Ecma335;
+using System.Security.Cryptography.Xml;
 using ZstdSharp.Unsafe;
 
 namespace Server.Services
@@ -512,6 +513,31 @@ namespace Server.Services
                 return IdentityResult.Failed();
             else
                 return IdentityResult.Success;
+        }
+
+        public async Task<IdentityResult> ChangeStatus(Guid formId, string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if(user is null)
+            {
+                throw new Exception("User not Found");
+            }
+
+            
+
+            var form = await _collection.Find(a => a.Form.Id == formId).FirstOrDefaultAsync();
+            if (form is null)
+                throw new Exception("Form not Found");
+
+            if (user.Id != form.Form.CreatorId)
+                throw new Exception("Not Authorized to Change the Status");
+
+            var filter = Builders<Forms>.Filter.Eq(a => a.Form.Id, form.Form.Id);
+
+            var update = Builders<Forms>.Update.Set(a => a.AcceptResponse, !form.AcceptResponse);
+            var result = await  _collection.UpdateOneAsync(filter: filter, update: update);
+
+            return result.ModifiedCount > 0 ? IdentityResult.Success : IdentityResult.Failed();
         }
     }
 }
