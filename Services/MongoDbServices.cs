@@ -551,7 +551,7 @@ namespace Server.Services
         {
             UserCredential credential;
 
-            using (var stream = new FileStream("V:\\VISHESH AGRAWAL\\VISUAL STUDIO\\VISUAL STUDIO\\ConsoleApp1\\credentials.json", FileMode.Open, FileAccess.Read))
+            using (var stream = new FileStream("../../../../../credentials.json", FileMode.Open, FileAccess.Read))
             {
                 string credPath = "token.json";
                 credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
