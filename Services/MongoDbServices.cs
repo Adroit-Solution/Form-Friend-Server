@@ -423,7 +423,7 @@ namespace Server.Services
                 };
                 reminders.Add(reminderModel);
 
-                SendEmail(user.FirstName,email,requestReminder.Message);
+                //SendEmail(user.FirstName,email,requestReminder.Message);
             }
 
             await _reminder.InsertManyAsync(reminders);
