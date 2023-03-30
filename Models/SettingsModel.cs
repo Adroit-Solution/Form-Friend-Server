@@ -20,11 +20,11 @@
 
         public bool IsResponseLimit { get; set; } = false;
 
-        public int ResponseLimit { get; set; } = 0;
+        public int ResponseLimit { get; set; } = 1;
 
         public bool IsResponseLimitPerUser { get; set; } = false;
 
-        public int ResponseLimitPerUser { get; set; } = 0;
+        public int ResponseLimitPerUser { get; set; } = 1;
 
         public bool ShowProgressBar { get; set; } = false;
 

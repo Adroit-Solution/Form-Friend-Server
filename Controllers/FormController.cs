@@ -221,7 +221,7 @@ namespace Server.Controllers
             }
             catch (Exception e)
             {
-                return Ok();
+                return BadRequest(e.Message);
             }
         }
 

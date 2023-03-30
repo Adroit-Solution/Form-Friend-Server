@@ -103,12 +103,22 @@ namespace Server.Services
                 }
             }
 
-            if(form.Settings.IsResponseLimitPerUser||!form.Settings.IsMultiple)
+            if(form.Settings.IsResponseLimitPerUser)
             {
                 if (form.Responses is not null)
                 {
                     var response = form.Responses.FindAll(a => a.UserId == user.Id);
                     if (response.Count()>=form.Settings.ResponseLimitPerUser)
+                        throw new Exception("You have already filled the Form");
+                }
+            }
+
+            if(!form.Settings.IsMultiple)
+            {
+                if (form.Responses is not null)
+                {
+                    var response = form.Responses.FindAll(a => a.UserId == user.Id);
+                    if (response.Count() >= 1)
                         throw new Exception("You have already filled the Form");
                 }
             }
