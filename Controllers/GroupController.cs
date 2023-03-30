@@ -141,5 +141,20 @@ namespace Server.Controllers
                 return BadRequest(e.Message);
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetGroup(Guid id)
+        {
+            var user = UserIdFromToken();
+            try
+            {
+                var result = await services.GetGroup(id,user);
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }

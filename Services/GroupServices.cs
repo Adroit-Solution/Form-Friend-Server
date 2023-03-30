@@ -326,5 +326,17 @@ namespace Server.Services
             }
             return IdentityResult.Success;
         }
+
+        public async Task<GroupModel> GetGroup(Guid id, string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                throw new Exception("User Not Found");
+
+            var result = await _group.Find(a => a.Creator == user.Id&&a.GroupId==id).FirstOrDefaultAsync();
+            if (result is null)
+                throw new Exception("No Such Group Present");
+            return result;
+        }
     }
 }
