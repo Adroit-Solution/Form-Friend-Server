@@ -142,7 +142,7 @@ namespace Server.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetGroup(Guid id)
         {
             var user = UserIdFromToken();
