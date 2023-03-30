@@ -164,10 +164,14 @@ namespace Server.Services
                 var push = Builders<Forms>.Update.Push("Responses", responseModel);
 
                 var added = _collection.UpdateOne(formFilter, push);
-                if (added.IsModifiedCountAvailable)
+                if (added.ModifiedCount>0)
                 {
                     formAded = true;
                     return IdentityResult.Success;
+                }
+                else
+                {
+                    throw new Exception("Response not added");
                 }
             }
 
