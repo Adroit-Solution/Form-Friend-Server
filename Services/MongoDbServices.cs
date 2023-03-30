@@ -1,4 +1,9 @@
-﻿using DnsClient;
+﻿using Google.Apis.Auth.OAuth2;
+using Google.Apis.Gmail.v1;
+using Google.Apis.Gmail.v1.Data;
+using Google.Apis.Services;
+using Google.Apis.Util.Store;
+using DnsClient;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -417,6 +422,8 @@ namespace Server.Services
                     User = user.Id
                 };
                 reminders.Add(reminderModel);
+
+                SendEmail(user.FirstName,email,requestReminder.Message);
             }
 
             await _reminder.InsertManyAsync(reminders);
@@ -523,7 +530,7 @@ namespace Server.Services
                 throw new Exception("User not Found");
             }
 
-            
+
 
             var form = await _collection.Find(a => a.Form.Id == formId).FirstOrDefaultAsync();
             if (form is null)
@@ -538,6 +545,53 @@ namespace Server.Services
             var result = await  _collection.UpdateOneAsync(filter: filter, update: update);
 
             return result.ModifiedCount > 0 ? IdentityResult.Success : IdentityResult.Failed();
+        }
+
+        private void SendEmail(string name,string email,string body)
+        {
+            UserCredential credential;
+
+            using (var stream = new FileStream("V:\\VISHESH AGRAWAL\\VISUAL STUDIO\\VISUAL STUDIO\\ConsoleApp1\\credentials.json", FileMode.Open, FileAccess.Read))
+            {
+                string credPath = "token.json";
+                credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    GoogleClientSecrets.FromStream(stream).Secrets,
+                    new[] { GmailService.Scope.GmailSend },
+                    "user",
+                    CancellationToken.None,
+                    new FileDataStore(credPath, true)).Result;
+                Console.WriteLine("Credential file saved to: " + credPath);
+            }
+
+            var service = new GmailService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = "Form Friend",
+            });
+
+            var message = new MimeKit.MimeMessage();
+            message.From.Add(new MimeKit.MailboxAddress("Form Friend", "agrawalvishesh9271@gmail.com"));
+            message.To.Add(new MimeKit.MailboxAddress(name, email));
+            message.Subject = "New Notification";
+            message.Body = new MimeKit.TextPart("plain")
+            {
+                Text = body
+            };
+
+            var rawMessage = Base64UrlEncode(message.ToString());
+            var gmailMessage = new Message { Raw = rawMessage };
+            var request = service.Users.Messages.Send(gmailMessage, "me");
+            request.Execute();
+        }
+
+        private static string Base64UrlEncode(string input)
+        {
+            var inputBytes = System.Text.Encoding.UTF8.GetBytes(input);
+            // Special "url-safe" base64 encode.
+            return Convert.ToBase64String(inputBytes)
+                .Replace('+', '-')
+                .Replace('/', '_')
+                .Replace("=", "");
         }
     }
 }

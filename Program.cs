@@ -1,3 +1,4 @@
+using MailKit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Server.Models;
@@ -45,7 +46,6 @@ builder.Services.AddAuthentication()
         };
 
     });
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
