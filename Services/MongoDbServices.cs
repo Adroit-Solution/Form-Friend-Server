@@ -388,8 +388,11 @@ namespace Server.Services
                 GroupId = group.GroupId,
                 GroupName = group.GroupName
             };
-            
-            var groupIndex = form.Group.IndexOf(trackingModel);
+
+            var toDelete = form.Group.Find(a => a.GroupId == groupId);
+            if (toDelete is null)
+                return IdentityResult.Success;
+            var groupIndex = form.Group.IndexOf(toDelete);
 
             var update = Builders<Forms>.Update.PullFilter(a => a.Group, a => a.GroupId == group.GroupId);
 
