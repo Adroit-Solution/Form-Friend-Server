@@ -706,5 +706,11 @@ namespace Server.Services
             _collection.DeleteMany(a=>a.Id==a.Id);
             return IdentityResult.Success;
         }
+
+        public List<Template> GetTemplate(string email)
+        {
+            var template = _Template.Find(a => a.Id == a.Id).ToList();
+            return template;
+        }
     }
 }

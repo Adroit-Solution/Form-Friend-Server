@@ -24,5 +24,6 @@ namespace Server.Services
         IdentityResult DeleteForm();
         Task<Forms> AddTemplate(Guid id, string email);
         Task<Template> AddNewTemplate();
+        List<Template> GetTemplate(string email);
     }
 }
