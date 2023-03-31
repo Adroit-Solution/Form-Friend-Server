@@ -183,6 +183,73 @@ namespace Server.Controllers
             }
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> AddNewTemplate(Guid id)
+        {
+            string userEmail = UserIdFromToken();
+            try
+            {
+                var form = await mongoDbServices.AddTemplate(id,userEmail);
+                return Ok(form);
+            }
+            catch (Exception e)
+            {
+                if (e.Message == "User Not Found")
+                {
+                    return NotFound("User Not Found");
+                }
+                else
+                {
+                    return BadRequest(e.Message);
+                }
+            }
+        }
+
+        [HttpGet]
+        public IActionResult GetTemplate()
+        {
+            var user = UserIdFromToken();
+            try
+            {
+                var form = mongoDbServices.GetTemplate(user);
+                return Ok(form);
+            }
+            catch (Exception e)
+            {
+                if (e.Message == "User Not Found")
+                {
+                    return NotFound("User Not Found");
+                }
+                else
+                {
+                    return BadRequest(e.Message);
+                }
+            }
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> AddTemplate()
+        {
+            //string userEmail = UserIdFromToken();
+            try
+            {
+                var form = await mongoDbServices.AddNewTemplate();
+                return Ok(form);
+            }
+            catch (Exception e)
+            {
+                if (e.Message == "User Not Found")
+                {
+                    return NotFound("User Not Found");
+                }
+                else
+                {
+                    return BadRequest(e.Message);
+                }
+            }
+        }
+
         [HttpPut("{groupId}/{formId}")]
         public async Task<IActionResult> AddGroupToForm(Guid groupId, Guid formId)
         {

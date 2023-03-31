@@ -22,6 +22,7 @@ namespace Server.Services
     public class MongoDbServices : IMongoDbServices
     {
         private readonly IMongoCollection<Forms> _collection;
+        private readonly IMongoCollection<Template> _Template;
         private readonly IMongoCollection<GroupModel> _group;
         private readonly IMongoCollection<ReminderModel> _reminder;
         private readonly UserManager<User> userManager;
@@ -33,6 +34,7 @@ namespace Server.Services
             _collection = database.GetCollection<Forms>("forms");
             _group = database.GetCollection<GroupModel>("group");
             _reminder = database.GetCollection<ReminderModel>("remainder");
+            _Template = database.GetCollection<Template>("template");
             this.userManager = userManager;
         }
 
@@ -412,6 +414,10 @@ namespace Server.Services
             if (admin is null)
                 throw new Exception("User not Found");
 
+            var form = await _collection.Find(a=>a.Form.Id==requestReminder.FormId).FirstOrDefaultAsync();
+            if (form is null)
+                throw new Exception("Form not Found");
+
             var group = await _group.Find(a => a.GroupId == requestReminder.GroupId).FirstOrDefaultAsync();
             if (group is null)
                 throw new Exception("Group not Present");
@@ -438,7 +444,7 @@ namespace Server.Services
                     AdminName = admin.FirstName,
                     Group = group.GroupId,
                     GroupName = group.GroupName,
-                    Message = requestReminder.Message,
+                    Message = $"You haven't filled the form yet. Fill it Before Deadline {}",
                     User = user.Id,
                     FromId = requestReminder.FormId
                 };
@@ -616,14 +622,84 @@ namespace Server.Services
                 .Replace("=", "");
         }
 
-        //public async Task<IdentityResult> AddTemplate(Guid id,string email)
-        //{
-        //    var user = await userManager.FindByEmailAsync(email);
-        //    if (user is null)
-        //        throw new Exception("User is not Present");
+        public async Task<Forms> AddTemplate(Guid id, string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                throw new Exception("User is not Present");
 
+            var template = await _Template.Find(a=>a.TemplateId== id).FirstOrDefaultAsync();
+            if (template is null)
+                throw new Exception("Template Not Found");
 
-        //}
+            Forms forms = new Forms()
+            {
+                Form = new MetaDataModel { Id = Guid.NewGuid(), UrlId = Guid.NewGuid(), CreatorId = user.Id, CSS = template.CSS, CreatedOn = DateTime.UtcNow, LastEdited = DateTime.UtcNow,Questions = template.Questions,Description = template.Description,FormName = template.FormName,Title = template.Title },
+                Group = new List<TrackingModel>(),
+                Responses = new List<ResponseModel>(),
+                Settings = new SettingsModel()
+            };
+            await _collection.InsertOneAsync(forms);
+            return forms;
+        }
+
+        public async Task<Template> AddNewTemplate()
+        {
+
+            Template forms = new Template()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Feedback",
+                Description = "Give your feedback",
+                CSS= new CSSModel(),
+                Questions = new List<QuestionModel> 
+                { 
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Name", Type = "Text", Options = new List<string>() }, 
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Email", Type = "Email", Options = new List<string>() }, 
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Your Feedback", Type = "TextArea", Options = new List<string>() } 
+                },
+                TemplateId = Guid.NewGuid(),
+                FormName = "Feedback Form",
+            };
+
+            Template forms1 = new Template()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Workshop Registration",
+                Description = "Register Yourself",
+                CSS = new CSSModel(),
+                Questions = new List<QuestionModel>
+                {
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Name", Type = "Text", Options = new List<string>() },
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Email", Type = "Email", Options = new List<string>() },
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Enrollment No.", Type = "Number", Options = new List<string>() },
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Branch Name", Type = "Radio", Options = new List<string>{ "IT","Computer","Mechanical"} }
+                },
+                TemplateId = Guid.NewGuid(),
+                FormName = "Workshop Registration",
+            };
+
+            Template forms2 = new Template()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Webinar",
+                Description = "Register Yourself for Webinar",
+                CSS = new CSSModel(),
+                Questions = new List<QuestionModel>
+                {
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Name", Type = "Text", Options = new List<string>() },
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Email", Type = "Email", Options = new List<string>() },
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Enrollment No.", Type = "Number", Options = new List<string>() },
+                    new QuestionModel { Id = Guid.NewGuid(), Question = "Branch Name", Type = "Radio", Options = new List<string>{ "IT","Computer","Mechanical"} }
+                },
+                TemplateId = Guid.NewGuid(),
+                FormName = "Webinar Registration",
+            };
+            await _Template.InsertOneAsync(forms);
+            await _Template.InsertOneAsync(forms1);
+            await _Template.InsertOneAsync(forms2);
+            return forms;
+        }
 
         public IdentityResult DeleteForm()
         {

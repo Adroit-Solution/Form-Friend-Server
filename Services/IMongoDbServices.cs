@@ -22,5 +22,7 @@ namespace Server.Services
         Task<IdentityResult> DeleteReminder(string id, string email);
         Task<IdentityResult> ChangeStatus(Guid formId, string email);
         IdentityResult DeleteForm();
+        Task<Forms> AddTemplate(Guid id, string email);
+        Task<Template> AddNewTemplate();
     }
 }
