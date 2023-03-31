@@ -444,7 +444,7 @@ namespace Server.Services
                     AdminName = admin.FirstName,
                     Group = group.GroupId,
                     GroupName = group.GroupName,
-                    Message = $"You haven't filled the form yet. Fill it Before Deadline {}",
+                    Message = "You haven't filled the form yet. Fill it Before Deadline",
                     User = user.Id,
                     FromId = requestReminder.FormId
                 };
