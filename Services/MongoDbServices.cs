@@ -441,7 +441,7 @@ namespace Server.Services
 
                 ReminderModel reminderModel = new()
                 {
-                    AdminName = admin.FirstName,
+                    AdminName = admin.Name,
                     Group = group.GroupId,
                     GroupName = group.GroupName,
                     Message = requestReminder.Message,
