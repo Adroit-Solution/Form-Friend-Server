@@ -446,7 +446,7 @@ namespace Server.Services
                     GroupName = group.GroupName,
                     Message = requestReminder.Message,
                     User = user.Id,
-                    FromId = requestReminder.FormId
+                    FromId = form.Form.UrlId
                 };
                 reminders.Add(reminderModel);
 
