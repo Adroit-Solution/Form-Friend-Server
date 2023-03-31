@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
+using System.Security.Principal;
 
 namespace Server.Models
 {
@@ -13,6 +14,7 @@ namespace Server.Models
         public string AdminName { get; set; }
         public string Message { get; set; } = "New Form Added into The Group";
         public bool IsSeen { get; set; } = false;
+        public Guid FromId { get; set; }
 
     }
 
@@ -20,6 +22,7 @@ namespace Server.Models
     {
         public Guid GroupId { get; set; }
         public string Message { get; set; }
+        public Guid FormId { get; set; }
         public List<string> Participants { get; set; }
     }
 
@@ -30,6 +33,7 @@ namespace Server.Models
         public string Message { get; set; }
         public string GroupName { get; set; }
         public string AdminName { get; set; }
+        public Guid FormId { get; set; }
         public bool IsSeen { get; set; }
     }
 }

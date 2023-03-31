@@ -43,7 +43,7 @@ namespace Server.Services
                 throw new Exception("User Not Found");
 
 
-            var result =  _collection.Find(a => a.Form.CreatorId == user.Id).ToList().Select(a=>new { a.Form.Id,a.Form.FormName });
+            var result =  _collection.Find(a => a.Form.CreatorId == user.Id).ToList().Select(a=>new { a.Form.Id,a.Form.FormName,a.Form.CreatedOn,a.Form.LastEdited});
             return result;
 
         }
@@ -439,7 +439,8 @@ namespace Server.Services
                     Group = group.GroupId,
                     GroupName = group.GroupName,
                     Message = requestReminder.Message,
-                    User = user.Id
+                    User = user.Id,
+                    FromId = requestReminder.FormId
                 };
                 reminders.Add(reminderModel);
 
@@ -471,6 +472,7 @@ namespace Server.Services
                     GroupId = reminder.Group,
                     IsSeen = reminder.IsSeen,
                     Message = reminder.Message,
+                    FormId = reminder.FromId
                 };
                 response.Add(responseModel);
             }
