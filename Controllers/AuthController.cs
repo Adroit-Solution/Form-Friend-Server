@@ -36,8 +36,7 @@ namespace Server.Controllers
             {
                 Email = user.Email,
                 UserName = user.UserName,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
+                Name = user.Name,
                 Profile = "https://localhost:44314//Profile/user-solid.svg"
             };
 
