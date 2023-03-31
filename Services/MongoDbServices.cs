@@ -15,6 +15,7 @@ using System;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography.Xml;
 using ZstdSharp.Unsafe;
+using System.Runtime.InteropServices;
 
 namespace Server.Services
 {
@@ -54,7 +55,7 @@ namespace Server.Services
                 throw new Exception("User Not Found");
             Forms forms = new Forms()
             {
-                Form = new MetaDataModel { Id = Guid.NewGuid(),UrlId = Guid.NewGuid(), CreatorId = user.Id,CSS = new CSSModel() },
+                Form = new MetaDataModel { Id = Guid.NewGuid(),UrlId = Guid.NewGuid(), CreatorId = user.Id,CSS = new CSSModel(),CreatedOn = DateTime.UtcNow,LastEdited = DateTime.UtcNow },
                 Group = new List<TrackingModel>(),
                 Responses = new List<ResponseModel>(),
                 Settings = new SettingsModel()
@@ -266,9 +267,10 @@ namespace Server.Services
 
             var filter = Builders<Forms>.Filter.Eq(x => x.Form.Id, meta.Id);
             var update = Builders<Forms>.Update
-              .Set(x=>x.Form.FormName,meta.FormName)
+              .Set(x => x.Form.FormName, meta.FormName)
               .Set(x => x.Form.Title, meta.Title)
               .Set(x => x.Form.Description, meta.Description)
+              .Set(x => x.Form.LastEdited, DateTime.UtcNow)
               .Set(x => x.Form.CSS, meta.CSS)
               .Set(x=>x.Form.Questions, meta.Questions);
 
@@ -293,7 +295,8 @@ namespace Server.Services
 
             var filter = Builders<Forms>.Filter.Eq(x => x.Form.Id, id);
             var update = Builders<Forms>.Update
-              .Set(x => x.Settings, settings);
+              .Set(x => x.Settings, settings)
+              .Set(x=>x.Form.LastEdited,DateTime.UtcNow);
 
             var result = await _collection.UpdateOneAsync(filter: filter, update: update);
 
@@ -609,6 +612,21 @@ namespace Server.Services
                 .Replace('+', '-')
                 .Replace('/', '_')
                 .Replace("=", "");
+        }
+
+        //public async Task<IdentityResult> AddTemplate(Guid id,string email)
+        //{
+        //    var user = await userManager.FindByEmailAsync(email);
+        //    if (user is null)
+        //        throw new Exception("User is not Present");
+
+
+        //}
+
+        public IdentityResult DeleteForm()
+        {
+            _collection.DeleteMany(a=>a.Id==a.Id);
+            return IdentityResult.Success;
         }
     }
 }

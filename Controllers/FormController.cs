@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -349,6 +350,29 @@ namespace Server.Controllers
             {
                 return BadRequest(e.Message);
             }
+        }
+
+        //[HttpPost]
+        //public async Task<IActionResult> AddTemplate(Guid id)
+        //{
+        //    var user = UserIdFromToken();
+        //    try
+        //    {
+        //        var result = await mongoDbServices.AddTemplate(id,user);
+        //    }
+        //    catch(Exception e)
+        //    {
+        //        return BadRequest(e.Message);
+        //    }
+
+        //}
+
+        [HttpDelete]
+        [AllowAnonymous]
+        public IActionResult DeleteForm()
+        {
+            mongoDbServices.DeleteForm();
+            return Ok();
         }
     }
 }

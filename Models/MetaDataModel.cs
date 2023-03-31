@@ -40,7 +40,11 @@ namespace Server.Models
                     Question="Untitled Question",
                     Type="Radio"
                 }
-            }; 
+            };
+
+        public DateTime CreatedOn { get; set; }
+
+        public DateTime LastEdited { get; set; }
 
         #endregion;
 

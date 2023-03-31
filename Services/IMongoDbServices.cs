@@ -21,5 +21,6 @@ namespace Server.Services
         Task<IdentityResult> MarkAsUnRead(string id, string email);
         Task<IdentityResult> DeleteReminder(string id, string email);
         Task<IdentityResult> ChangeStatus(Guid formId, string email);
+        IdentityResult DeleteForm();
     }
 }
