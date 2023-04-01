@@ -442,20 +442,28 @@ namespace Server.Controllers
             return Ok();
         }
 
-        [HttpGet]
+        [HttpGet()]
         [AllowAnonymous]
-        public IActionResult SendMail()
+        public IActionResult SendMail([FromBody]Email email)
         {
             //var user = UserIdFromToken();
             try
             {
-                mongoDbServices.SendEmail("Vishesh Agrawal","pilotvishesh@gmail.com","Hello");
+                mongoDbServices.SendEmail(email);
                 return Ok();
             }
             catch (Exception e)
             {
                 return BadRequest(e.Message);
             }
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult SendReminder()
+        {
+            mongoDbServices.SendReminder();
+            return Ok();
         }
     }
 }

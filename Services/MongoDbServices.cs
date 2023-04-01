@@ -18,6 +18,8 @@ using ZstdSharp.Unsafe;
 using System.Runtime.InteropServices;
 using System.Net.Mail;
 using System.Net;
+using sib_api_v3_sdk.Model;
+using System.Xml.Linq;
 
 namespace Server.Services
 {
@@ -28,9 +30,8 @@ namespace Server.Services
         private readonly IMongoCollection<GroupModel> _group;
         private readonly IMongoCollection<ReminderModel> _reminder;
         private readonly UserManager<User> userManager;
-        private readonly IWebHostEnvironment webHostEnvironment;
 
-        public MongoDbServices(IOptions<MongoDBSettings> settings, UserManager<User> userManager, IWebHostEnvironment webHostEnvironment)
+        public MongoDbServices(IOptions<MongoDBSettings> settings, UserManager<User> userManager,IWebHostEnvironment webHostEnvironment)
         {
             var client = new MongoClient(settings.Value.ConnectionURI);
             var database = client.GetDatabase(settings.Value.DatabaseName);
@@ -39,7 +40,6 @@ namespace Server.Services
             _reminder = database.GetCollection<ReminderModel>("remainder");
             _Template = database.GetCollection<Template>("template");
             this.userManager = userManager;
-            this.webHostEnvironment = webHostEnvironment;
         }
 
         public async Task<IEnumerable<dynamic>> GetAllFormsAsync(string email)
@@ -579,14 +579,11 @@ namespace Server.Services
             return result.ModifiedCount > 0 ? IdentityResult.Success : IdentityResult.Failed();
         }
 
-        public void SendEmail(string name, string email, string body)
+        public void SendEmail(Email email)
         {
             UserCredential credential;
-            string folder = Path.Combine(webHostEnvironment.WebRootPath, "credentials");
-            string paperName = "credentials 1.json";
-            string FinalPath = Path.Combine(folder, paperName);
-            
-            using (var stream = new FileStream(FinalPath, FileMode.Open, FileAccess.Read))
+
+            using (var stream = new FileStream("V:\\VISHESH AGRAWAL\\HackVgec\\Server\\credentials 1.json", FileMode.Open, FileAccess.Read))
             {
                 string credPath = "token.json";
                 credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
@@ -604,19 +601,23 @@ namespace Server.Services
                 ApplicationName = "Form Friend",
             });
 
-            var message = new MimeKit.MimeMessage();
-            message.From.Add(new MimeKit.MailboxAddress("Form Friend", "agrawalvishesh9271@gmail.com"));
-            message.To.Add(new MimeKit.MailboxAddress(name, email));
-            message.Subject = "New Notification";
-            message.Body = new MimeKit.TextPart("plain")
+            foreach (var item in email.Participants)
             {
-                Text = body
-            };
+                var message = new MimeKit.MimeMessage();
+                message.From.Add(new MimeKit.MailboxAddress("Form Friend", "agrawalvishesh9271@gmail.com"));
+                message.To.Add(new MimeKit.MailboxAddress(item.Name, item.Email));
+                message.Subject = "New Notification";
+                message.Body = new MimeKit.TextPart("plain")
+                {
+                    Text = email.Message
+                };
 
-            var rawMessage = Base64UrlEncode(message.ToString());
-            var gmailMessage = new Message { Raw = rawMessage };
-            var request = service.Users.Messages.Send(gmailMessage, "me");
-            request.Execute();
+                var rawMessage = Base64UrlEncode(message.ToString());
+                var gmailMessage = new Message { Raw = rawMessage };
+                var request = service.Users.Messages.Send(gmailMessage, "me");
+                request.Execute();
+            }
+            
         }
 
         //public void SendEmail(string name, string email, string message)
@@ -750,7 +751,7 @@ namespace Server.Services
             return template;
         }
 
-        public async Task SendReminder()
+        public async Task<IdentityResult> SendReminder()
         {
             var forms = _collection.Find(a => a.Id == a.Id).ToList();
             foreach (var form in forms)
@@ -764,14 +765,32 @@ namespace Server.Services
                             var members = group.Participants.FindAll(a => a.Filled == false);
                             if(members.Count()>0)
                             {
+                                List<ReminderModel> reminders = new List<ReminderModel>();
+
                                 foreach (var member in members)
                                 {
-                                    var user = await userManager.FindByIdAsync(member.Email);
-                                    if (user is null)
-                                        throw new Exception("User is not Present");
-                                    var body = "Hello " + user.Name + " You have not filled the form yet. Please fill it as soon as possible";
-                                    ((IMongoDbServices)this).SendEmail(user.Name, user.Email, body);
+                                        var user = await userManager.FindByEmailAsync(member.Email);
+                                        if (user is null)
+                                            continue;
+
+                                        if (!group.Participants.Contains(member))
+                                            continue;
+
+                                        ReminderModel reminderModel = new()
+                                        {
+                                            AdminName = user.Name,
+                                            Group = group.GroupId,
+                                            GroupName = group.GroupName,
+                                            Message = "Form Not Filled",
+                                            User = user.Id,
+                                            FromId = form.Form.UrlId
+                                        };
+                                        reminders.Add(reminderModel);
+
+                                        //SendEmail(user.FirstName,email,requestReminder.Message);
+
                                 }
+                                await _reminder.InsertManyAsync(reminders);
                             }
                         }
                         
@@ -780,6 +799,7 @@ namespace Server.Services
                 }
 
             }
+            return IdentityResult.Success;
         }
     }
 }
