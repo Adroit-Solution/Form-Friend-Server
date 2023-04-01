@@ -16,6 +16,8 @@ using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography.Xml;
 using ZstdSharp.Unsafe;
 using System.Runtime.InteropServices;
+using System.Net.Mail;
+using System.Net;
 
 namespace Server.Services
 {
@@ -26,8 +28,9 @@ namespace Server.Services
         private readonly IMongoCollection<GroupModel> _group;
         private readonly IMongoCollection<ReminderModel> _reminder;
         private readonly UserManager<User> userManager;
+        private readonly IWebHostEnvironment webHostEnvironment;
 
-        public MongoDbServices(IOptions<MongoDBSettings> settings, UserManager<User> userManager)
+        public MongoDbServices(IOptions<MongoDBSettings> settings, UserManager<User> userManager, IWebHostEnvironment webHostEnvironment)
         {
             var client = new MongoClient(settings.Value.ConnectionURI);
             var database = client.GetDatabase(settings.Value.DatabaseName);
@@ -36,6 +39,7 @@ namespace Server.Services
             _reminder = database.GetCollection<ReminderModel>("remainder");
             _Template = database.GetCollection<Template>("template");
             this.userManager = userManager;
+            this.webHostEnvironment = webHostEnvironment;
         }
 
         public async Task<IEnumerable<dynamic>> GetAllFormsAsync(string email)
@@ -575,11 +579,14 @@ namespace Server.Services
             return result.ModifiedCount > 0 ? IdentityResult.Success : IdentityResult.Failed();
         }
 
-        private void SendEmail(string name,string email,string body)
+        public void SendEmail(string name, string email, string body)
         {
             UserCredential credential;
-
-            using (var stream = new FileStream("../../../../../credentials.json", FileMode.Open, FileAccess.Read))
+            string folder = Path.Combine(webHostEnvironment.WebRootPath, "credentials");
+            string paperName = "credentials 1.json";
+            string FinalPath = Path.Combine(folder, paperName);
+            
+            using (var stream = new FileStream(FinalPath, FileMode.Open, FileAccess.Read))
             {
                 string credPath = "token.json";
                 credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
@@ -611,6 +618,36 @@ namespace Server.Services
             var request = service.Users.Messages.Send(gmailMessage, "me");
             request.Execute();
         }
+
+        //public void SendEmail(string name, string email, string message)
+        //{
+        //    var fromAddress = new MailAddress("agrawalvishesh9271@gmail.com");
+        //    var toAddress = new MailAddress(email);
+        //    const string fromPassword = "vishu@4104%";
+        //    const string subject = "Reminder";
+        //    string body = $"Hi {name},\n\n{message}";
+
+        //    var smtp = new SmtpClient
+        //    {
+        //        Host = "smtp.gmail.com",
+        //        Port = 587,
+        //        EnableSsl = true,
+        //        DeliveryMethod = SmtpDeliveryMethod.Network,
+        //        UseDefaultCredentials = false,
+        //        Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+        //    };
+
+        //    using (var mess = new MailMessage(fromAddress, toAddress)
+        //    {
+        //        Subject = subject,
+        //        Body = body
+        //    })
+        //    {
+        //        smtp.Send(mess);
+        //    }
+
+
+        //}
 
         private static string Base64UrlEncode(string input)
         {
@@ -711,6 +748,38 @@ namespace Server.Services
         {
             var template = _Template.Find(a => a.Id == a.Id).ToList();
             return template;
+        }
+
+        public async Task SendReminder()
+        {
+            var forms = _collection.Find(a => a.Id == a.Id).ToList();
+            foreach (var form in forms)
+            {
+                if (DateTime.UtcNow.AddDays(2)==form.Settings.EndTime|| DateTime.UtcNow.AddDays(1) == form.Settings.EndTime)
+                {
+                    if (form.Group.Count() != 0)
+                    {
+                        foreach (var group in form.Group)
+                        {
+                            var members = group.Participants.FindAll(a => a.Filled == false);
+                            if(members.Count()>0)
+                            {
+                                foreach (var member in members)
+                                {
+                                    var user = await userManager.FindByIdAsync(member.Email);
+                                    if (user is null)
+                                        throw new Exception("User is not Present");
+                                    var body = "Hello " + user.Name + " You have not filled the form yet. Please fill it as soon as possible";
+                                    ((IMongoDbServices)this).SendEmail(user.Name, user.Email, body);
+                                }
+                            }
+                        }
+                        
+                    }
+                    
+                }
+
+            }
         }
     }
 }

@@ -25,5 +25,6 @@ namespace Server.Services
         Task<Forms> AddTemplate(Guid id, string email);
         Task<Template> AddNewTemplate();
         List<Template> GetTemplate(string email);
+        void SendEmail(string name, string email, string message);
     }
 }

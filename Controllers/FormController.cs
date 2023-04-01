@@ -441,5 +441,21 @@ namespace Server.Controllers
             mongoDbServices.DeleteForm();
             return Ok();
         }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult SendMail()
+        {
+            //var user = UserIdFromToken();
+            try
+            {
+                mongoDbServices.SendEmail("Vishesh Agrawal","pilotvishesh@gmail.com","Hello");
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }
