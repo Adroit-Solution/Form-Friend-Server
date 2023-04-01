@@ -756,7 +756,7 @@ namespace Server.Services
             var forms = _collection.Find(a => a.Id == a.Id).ToList();
             foreach (var form in forms)
             {
-                if (DateTime.UtcNow.AddDays(2)==form.Settings.EndTime|| DateTime.UtcNow.AddDays(1) == form.Settings.EndTime)
+                if (DateTime.UtcNow.AddDays(2).Date==form.Settings.EndTime.Date|| DateTime.UtcNow.AddDays(1).Date == form.Settings.EndTime.Date)
                 {
                     if (form.Group.Count() != 0)
                     {

@@ -462,8 +462,16 @@ namespace Server.Controllers
         [AllowAnonymous]
         public IActionResult SendReminder()
         {
-            mongoDbServices.SendReminder();
-            return Ok();
+            try
+            {
+                mongoDbServices.SendReminder();
+                return Ok();
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
         }
     }
 }
