@@ -1,13 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Server.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text.Json.Nodes;
 using System.Text;
-using Microsoft.AspNetCore.Cors;
+using System.Text.Json.Nodes;
 
 namespace Server.Controllers
 {
@@ -26,7 +25,7 @@ namespace Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateUser([FromBody]UserModel user)
+        public async Task<IActionResult> CreateUser([FromBody] UserModel user)
         {
             var isUser = await userManager.FindByEmailAsync(user.Email);
             if (isUser is not null)
@@ -40,7 +39,7 @@ namespace Server.Controllers
                 Profile = "https://localhost:44314//Profile/user-solid.svg"
             };
 
-            var result = await userManager.CreateAsync(toAdd,user.Password);
+            var result = await userManager.CreateAsync(toAdd, user.Password);
 
             if (result.Succeeded)
             {
@@ -66,7 +65,7 @@ namespace Server.Controllers
                 {
                     new Claim(ClaimTypes.Name, isUserPresent.UserName),
                     new Claim(ClaimTypes.Email, isUserPresent.Email),
-                    new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti , Guid.NewGuid().ToString())
+                    new Claim(JwtRegisteredClaimNames.Jti , Guid.NewGuid().ToString())
                 };
 
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("+)3@5!7#9$0%2^4&6*8(0"));
